@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Yahoo historical stock data client class.
 /// </summary>
-public partial class YahooHistoricalClient : YahooClientBase
+public partial class YahooHistoricalClient : YahooClientBase, IAsyncEnumerable<string?>
 {
     private readonly string url;
     private readonly ILogger<YahooHistoricalClient>? logger;
@@ -57,28 +57,25 @@ public partial class YahooHistoricalClient : YahooClientBase
         this.url = $"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={Crumb}";
     }
 
-    /// <summary>
-    /// Get the next row.
-    /// </summary>
-    /// <returns>True if no more rows.</returns>
-    public async Task<bool> Next()
+    /// <inheritdoc/>
+    public async IAsyncEnumerator<string?> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        await this.CheckFirstTime();
-        return true;
-    }
+        var enumerator = this.GetData(this.url, this.cancellationToken);
 
-    /// <summary>
-    /// Get CSV from website.
-    /// </summary>
-    /// <returns>Task.</returns>
-    private async Task CheckFirstTime()
-    {
-        //// TODO: is this the first time?
-
-        await this.CheckCrumb(this.cancellationToken);
-
-        await foreach (var line in GetData(this.url, this.cancellationToken))
+        await foreach (var line in enumerator)
         {
+            yield return line;
         }
     }
+
+    //// https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/async-streams
+    ////    IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();
+    ////    try
+    ////    {
+    ////        while (await enumerator.MoveNextAsync())
+    ////        {
+    ////            Use(enumerator.Current);
+    ////        }
+    ////    }
+    ////    finally { await enumerator.DisposeAsync(); }
 }

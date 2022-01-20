@@ -43,30 +43,14 @@ public abstract class YahooClientBase
     public int CrumbResetInterval { get; set; } = 5;
 
     /// <summary>
+    /// Gets a value indicating whether successful.
+    /// </summary>
+    public bool IsSuccessful { get; private set; }
+
+    /// <summary>
     /// Gets the Yahoo crumb to use.
     /// </summary>
     protected static string Crumb { get; private set; }
-
-    /// <summary>
-    /// Get data stream.
-    /// </summary>
-    /// <param name="url">URL to get the data.</param>
-    /// <param name="cancellationToken">CancellationToken.</param>
-    /// <returns>List of strings.</returns>
-    protected static async IAsyncEnumerable<string?> GetData(string url, [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var response = await ApiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
-        if (response.IsSuccessStatusCode)
-        {
-            using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            using var reader = new StreamReader(responseStream);
-
-            while (!reader.EndOfStream)
-            {
-                yield return await reader.ReadLineAsync();
-            }
-        }
-    }
 
     /// <summary>
     /// Convert the interval into a string.
@@ -94,6 +78,34 @@ public abstract class YahooClientBase
         {
             nextCrumbTime = DateTime.Now.AddMinutes(this.CrumbResetInterval);
             await this.RefreshCookieAndCrumbAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Get data stream.
+    /// </summary>
+    /// <param name="url">URL to get the data.</param>
+    /// <param name="cancellationToken">CancellationToken.</param>
+    /// <returns>List of strings.</returns>
+    protected async IAsyncEnumerable<string?> GetData(string url, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await this.CheckCrumb(cancellationToken);
+
+        var response = await ApiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+        if (response.IsSuccessStatusCode)
+        {
+            this.IsSuccessful = true;
+            using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var reader = new StreamReader(responseStream);
+
+            while (!reader.EndOfStream)
+            {
+                yield return await reader.ReadLineAsync();
+            }
+        }
+        else
+        {
+            this.IsSuccessful = false;
         }
     }
 
