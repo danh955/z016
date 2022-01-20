@@ -9,14 +9,11 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Yahoo historical stock data client class.
 /// </summary>
-public class YahooHistoricalClient : YahooClientBase
+public partial class YahooHistoricalClient : YahooClientBase
 {
-    private string symbol;
-    private DateOnly? firstDate;
-    private DateOnly? lastDate;
-    private YahooInterval? interval;
-    private ILogger<YahooHistoricalClient>? logger;
-    private CancellationToken cancellationToken;
+    private readonly string url;
+    private readonly ILogger<YahooHistoricalClient>? logger;
+    private readonly CancellationToken cancellationToken;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="YahooHistoricalClient"/> class.
@@ -35,10 +32,6 @@ public class YahooHistoricalClient : YahooClientBase
         ILogger<YahooHistoricalClient>? logger = null,
         CancellationToken? cancellationToken = null)
     {
-        this.symbol = symbol;
-        this.firstDate = firstDate;
-        this.lastDate = lastDate;
-        this.interval = interval;
         this.logger = logger;
         this.cancellationToken = cancellationToken ?? CancellationToken.None;
 
@@ -54,62 +47,14 @@ public class YahooHistoricalClient : YahooClientBase
                 throw new ArgumentException($"{nameof(firstDate)} is grater then {nameof(lastDate)}");
             }
         }
-    }
 
-    /// <summary>
-    /// Gets date of price.
-    /// </summary>
-    public DateOnly Date
-    {
-        get { return DateOnly.FromDateTime(DateTime.Now); }
-    }
+        this.logger?.LogInformation("{symbol}", symbol);
 
-    /// <summary>
-    /// Gets opening price of the stock.
-    /// </summary>
-    public double? Open
-    {
-        get { return null; }
-    }
+        string period1 = firstDate.HasValue ? firstDate.Value.ToUnixTimestamp() : Constant.EpochString;
+        string period2 = lastDate.HasValue ? lastDate.Value.ToUnixTimestamp() : DateTime.Today.ToUnixTimestamp();
+        string intervalString = ToIntervalString(interval);
 
-    /// <summary>
-    /// Gets the high price.
-    /// </summary>
-    public double? High
-    {
-        get { return null; }
-    }
-
-    /// <summary>
-    /// Gets the low price.
-    /// </summary>
-    public double? Low
-    {
-        get { return null; }
-    }
-
-    /// <summary>
-    /// Gets closing price.
-    /// </summary>
-    public double? Close
-    {
-        get { return null; }
-    }
-
-    /// <summary>
-    /// Gets the adjusted closing price.
-    /// </summary>
-    public double? AdjClose
-    {
-        get { return null; }
-    }
-
-    /// <summary>
-    /// Gets the volume traded.
-    /// </summary>
-    public long? Volume
-    {
-        get { return null; }
+        this.url = $"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={Crumb}";
     }
 
     /// <summary>
@@ -130,14 +75,9 @@ public class YahooHistoricalClient : YahooClientBase
     {
         //// TODO: is this the first time?
 
-        string period1 = this.firstDate.HasValue ? this.firstDate.Value.ToUnixTimestamp() : Constant.EpochString;
-        string period2 = this.lastDate.HasValue ? this.lastDate.Value.ToUnixTimestamp() : DateTime.Today.ToUnixTimestamp();
-        string intervalString = ToIntervalString(this.interval);
-
         await this.CheckCrumb(this.cancellationToken);
-        string url = $"https://query1.finance.yahoo.com/v7/finance/download/{this.symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={Crumb}";
 
-        await foreach (var line in GetData(url, this.cancellationToken))
+        await foreach (var line in GetData(this.url, this.cancellationToken))
         {
         }
     }
