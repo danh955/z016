@@ -9,9 +9,8 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Yahoo historical stock data client class.
 /// </summary>
-public partial class YahooHistoricalClient : YahooClientBase, IAsyncEnumerable<string?>
+public partial class YahooHistoricalClient : YahooClientBase, IAsyncEnumerable<string?> /*, IEnumerable<string>*/
 {
-    private readonly string url;
     private readonly ILogger<YahooHistoricalClient>? logger;
     private readonly CancellationToken cancellationToken;
 
@@ -30,10 +29,10 @@ public partial class YahooHistoricalClient : YahooClientBase, IAsyncEnumerable<s
         DateOnly? lastDate = null,
         YahooInterval interval = YahooInterval.Daily,
         ILogger<YahooHistoricalClient>? logger = null,
-        CancellationToken? cancellationToken = null)
+        CancellationToken cancellationToken = default)
     {
         this.logger = logger;
-        this.cancellationToken = cancellationToken ?? CancellationToken.None;
+        this.cancellationToken = cancellationToken;
 
         if (string.IsNullOrWhiteSpace(symbol))
         {
@@ -54,19 +53,53 @@ public partial class YahooHistoricalClient : YahooClientBase, IAsyncEnumerable<s
         string period2 = lastDate.HasValue ? lastDate.Value.ToUnixTimestamp() : DateTime.Today.ToUnixTimestamp();
         string intervalString = ToIntervalString(interval);
 
-        this.url = $"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={Crumb}";
+        var url = $"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={Crumb}";
+        Task.Run(() => this.SetResponse(url, cancellationToken), cancellationToken);
+
+        //// TODO: async constructor pattern
+        //// https://stackoverflow.com/questions/8145479/can-constructors-be-async/31471915#31471915
     }
 
     /// <inheritdoc/>
     public async IAsyncEnumerator<string?> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        var enumerator = this.GetData(this.url, this.cancellationToken);
+        var enumerator = this.GetData(this.cancellationToken);
 
         await foreach (var line in enumerator)
         {
             yield return line;
         }
+
+        ////List<string> result = new();
+        ////result.Add("one");
+        ////result.Add("two");
+
+        ////foreach (var line in result)
+        ////{
+        ////    await Task.Delay(1, cancellationToken);
+        ////    yield return line;
+        ////}
     }
+
+    /////// <inheritdoc/>
+    ////public IEnumerator<string> GetEnumerator()
+    ////{
+    ////    List<string> result = new();
+    ////    foreach (var line in result)
+    ////    {
+    ////        yield return line;
+    ////    }
+    ////}
+
+    /////// <inheritdoc/>
+    ////IEnumerator IEnumerable.GetEnumerator()
+    ////{
+    ////    List<string> result = new();
+    ////    foreach (var line in result)
+    ////    {
+    ////        yield return line;
+    ////    }
+    ////}
 
     //// https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/async-streams
     ////    IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();

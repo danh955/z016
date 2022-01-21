@@ -21,6 +21,8 @@ public abstract class YahooClientBase
                             "\"CrumbStore\":{\"crumb\":\"(?<crumb>.+?)\"}",
                             RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private HttpResponseMessage? response;
+
     /// <summary>
     /// Initializes static members of the <see cref="YahooClientBase"/> class.
     /// </summary>
@@ -82,30 +84,36 @@ public abstract class YahooClientBase
     }
 
     /// <summary>
-    /// Get data stream.
+    /// Get the HTTP response message from the URL.
     /// </summary>
     /// <param name="url">URL to get the data.</param>
     /// <param name="cancellationToken">CancellationToken.</param>
-    /// <returns>List of strings.</returns>
-    protected async IAsyncEnumerable<string?> GetData(string url, [EnumeratorCancellation] CancellationToken cancellationToken)
+    /// <returns>Task.</returns>
+    protected async Task SetResponse(string url, CancellationToken cancellationToken)
     {
         await this.CheckCrumb(cancellationToken);
+        this.response = await ApiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+        this.IsSuccessful = this.response.IsSuccessStatusCode;
+    }
 
-        var response = await ApiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
-        if (response.IsSuccessStatusCode)
+    /// <summary>
+    /// Get data stream.
+    /// </summary>
+    /// <param name="cancellationToken">CancellationToken.</param>
+    /// <returns>List of strings.</returns>
+    protected async IAsyncEnumerable<string?> GetData([EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (this.response == null)
         {
-            this.IsSuccessful = true;
-            using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            using var reader = new StreamReader(responseStream);
-
-            while (!reader.EndOfStream)
-            {
-                yield return await reader.ReadLineAsync();
-            }
+            throw new ArgumentNullException("{response}", nameof(this.response));
         }
-        else
+
+        using var responseStream = await this.response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var reader = new StreamReader(responseStream);
+
+        while (!reader.EndOfStream)
         {
-            this.IsSuccessful = false;
+            yield return await reader.ReadLineAsync();
         }
     }
 
