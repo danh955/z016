@@ -5,7 +5,7 @@ using Z016.YahooFinanceApi;
 
 internal class Program
 {
-    private static async Task Main(string[] args)
+    private static async Task Main()
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {

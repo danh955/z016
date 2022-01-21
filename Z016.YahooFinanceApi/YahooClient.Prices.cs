@@ -27,6 +27,19 @@ public partial class YahooClient
         YahooInterval interval = YahooInterval.Daily,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(symbol))
+        {
+            throw new ArgumentNullException(nameof(symbol));
+        }
+
+        if (firstDate != null && lastDate != null)
+        {
+            if (firstDate > lastDate)
+            {
+                throw new ArgumentException($"{nameof(firstDate)} is grater then {nameof(lastDate)}");
+            }
+        }
+
         string period1 = firstDate.HasValue ? firstDate.Value.ToUnixTimestamp() : Constant.EpochString;
         string period2 = lastDate.HasValue ? lastDate.Value.ToUnixTimestamp() : DateTime.Today.ToUnixTimestamp();
         string intervalString = ToIntervalString(interval);
