@@ -44,7 +44,7 @@ public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
     public bool IsSuccessful { get; private set; }
 
     /// <summary>
-    /// Gets the contains value of status codes defined for HTTP.
+    /// Gets the value of status codes from the HTTP request.
     /// </summary>
     public HttpStatusCode StatusCode { get; private set; }
 
@@ -59,10 +59,33 @@ public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
         using var responseStream = await this.response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var reader = new StreamReader(responseStream);
 
-        while (!reader.EndOfStream)
+        // Skip header.
+        var line = await reader.ReadLineAsync();
+        if (line != null)
         {
-            var line = await reader.ReadLineAsync();
-            yield return new YahooPrice(new DateOnly(2021, 1, 1), 1, 2, 3, 4, 5, 6);
+            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            {
+                line = await reader.ReadLineAsync();
+                if (line != null)
+                {
+                    var column = line.Split(',');
+                    if (column.Length == 7)
+                    {
+                        var date = column[0].GetDateOnly();
+                        if (date != null)
+                        {
+                            yield return new YahooPrice(
+                                date.Value,
+                                column[1].GetDouble(),
+                                column[2].GetDouble(),
+                                column[3].GetDouble(),
+                                column[4].GetDouble(),
+                                column[5].GetDouble(),
+                                column[6].GetLong());
+                        }
+                    }
+                }
+            } // While loop
         }
 
         this.response = null;

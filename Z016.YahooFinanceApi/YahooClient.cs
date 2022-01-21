@@ -70,8 +70,8 @@ public partial class YahooClient
 
     private static string? GetCookie(HttpResponseMessage responseMessage, string cookieName)
     {
-        var keyValue = responseMessage.Headers.SingleOrDefault(h => h.Key == cookieName);
-        return keyValue.Value?.SingleOrDefault();
+        var keyValue = responseMessage.Headers.FirstOrDefault(h => h.Key == cookieName);
+        return keyValue.Value?.FirstOrDefault();
     }
 
     /// <summary>

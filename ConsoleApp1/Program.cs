@@ -24,9 +24,12 @@ internal class Program
         var response = await client.GetPrices("msft", today.AddDays(-7), today);
         logger.LogInformation("IsSuccessful = {IsSuccessful}  StatusCode = {StatusCode}", response.IsSuccessful, response.StatusCode);
 
-        await foreach (var item in response)
+        if (response.IsSuccessful)
         {
-            Console.WriteLine(item);
+            await foreach (var item in response)
+            {
+                Console.WriteLine(item);
+            }
         }
 
         logger.LogInformation("End");
