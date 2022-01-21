@@ -53,7 +53,7 @@ public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
     {
         if (this.response == null)
         {
-            throw new ArgumentNullException("{response}", nameof(this.response));
+            throw new ArgumentNullException("{response}  Enumerator can only be read once.", nameof(this.response));
         }
 
         using var responseStream = await this.response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);

@@ -18,8 +18,10 @@ internal class Program
 
         logger.LogInformation("Start");
 
+        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
         var client = new YahooClient(loggerFactory.CreateLogger<YahooClient>());
-        var response = await client.GetPrices("msft");
+        var response = await client.GetPrices("msft", today.AddDays(-7), today);
         logger.LogInformation("IsSuccessful = {IsSuccessful}  StatusCode = {StatusCode}", response.IsSuccessful, response.StatusCode);
 
         await foreach (var item in response)
