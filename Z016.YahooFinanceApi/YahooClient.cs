@@ -28,7 +28,7 @@ public partial class YahooClient
     /// Initializes a new instance of the <see cref="YahooClient"/> class.
     /// </summary>
     /// <param name="logger">ILogger.</param>
-    public YahooClient(ILogger<YahooClient> logger)
+    public YahooClient(ILogger<YahooClient>? logger = null)
     {
         this.logger = logger;
 
@@ -63,7 +63,7 @@ public partial class YahooClient
             tryCount++;
         }
 
-        this.logger?.LogInformation("Got cookie. tryCount = {TryCount}, Crumb = {Crumb}, Cookie = {Cookie}", tryCount, crumb, cookie);
+        this.logger?.LogDebug("Got cookie. tryCount = {TryCount}, Crumb = {Crumb}, Cookie = {Cookie}", tryCount, this.crumb, cookie);
         this.apiHttpClient.DefaultRequestHeaders.Add(HttpRequestHeader.Cookie.ToString(), cookie);
         this.crumb = newCrumb ?? string.Empty;
     }

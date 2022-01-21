@@ -5,13 +5,14 @@
 namespace Z016.YahooFinanceApi;
 
 using System.Net;
+using System.Threading;
 
 /// <summary>
 /// Yahoo prices result class.
 /// </summary>
-public class YahooPricesResult
+public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
 {
-    private readonly HttpResponseMessage? response;
+    private HttpResponseMessage? response;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="YahooPricesResult"/> class.
@@ -46,6 +47,26 @@ public class YahooPricesResult
     /// Gets the contains value of status codes defined for HTTP.
     /// </summary>
     public HttpStatusCode StatusCode { get; private set; }
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerator<YahooPrice> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    {
+        if (this.response == null)
+        {
+            throw new ArgumentNullException("{response}", nameof(this.response));
+        }
+
+        using var responseStream = await this.response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var reader = new StreamReader(responseStream);
+
+        while (!reader.EndOfStream)
+        {
+            var line = await reader.ReadLineAsync();
+            yield return new YahooPrice(new DateOnly(2021, 1, 1), 1, 2, 3, 4, 5, 6);
+        }
+
+        this.response = null;
+    }
 }
 
 /// <summary>
