@@ -51,7 +51,7 @@ public partial class YahooClient
         var response = await this.apiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
         return response.IsSuccessStatusCode
-            ? new YahooPricesResult(response)
+            ? new YahooPricesResult(response, cancellationToken)
             : new YahooPricesResult(response.StatusCode);
     }
 }

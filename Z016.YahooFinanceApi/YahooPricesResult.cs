@@ -12,6 +12,7 @@ using System.Threading;
 /// </summary>
 public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
 {
+    private readonly CancellationToken cancellationToken;
     private HttpResponseMessage? response;
 
     /// <summary>
@@ -19,9 +20,11 @@ public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
     /// Successful constructor.
     /// </summary>
     /// <param name="response">HttpResponseMessage.</param>
-    internal YahooPricesResult(HttpResponseMessage response)
+    /// <param name="cancellationToken">CancellationToken.</param>
+    internal YahooPricesResult(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         this.response = response;
+        this.cancellationToken = cancellationToken;
         this.IsSuccessful = true;
         this.StatusCode = response.StatusCode;
     }
@@ -54,6 +57,11 @@ public class YahooPricesResult : IAsyncEnumerable<YahooPrice>
         if (this.response == null)
         {
             throw new ArgumentNullException("{response}  Enumerator can only be read once.", nameof(this.response));
+        }
+
+        if (cancellationToken == default && this.cancellationToken != default)
+        {
+            cancellationToken = this.cancellationToken;
         }
 
         using var responseStream = await this.response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
