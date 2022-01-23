@@ -18,15 +18,13 @@ internal class Program
 
         logger.LogInformation("Start");
 
-        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
-
         var client = new YahooClient(loggerFactory.CreateLogger<YahooClient>());
-        var response = await client.GetPrices("msft", today.AddDays(-7), today);
+        var response = await client.GetPricesAsync("msft", new(2022, 1, 3), new(2022, 1, 8));
         logger.LogInformation("IsSuccessful = {IsSuccessful}  StatusCode = {StatusCode}", response.IsSuccessful, response.StatusCode);
 
         if (response.IsSuccessful)
         {
-            await foreach (var item in response)
+            foreach (var item in response.Prices)
             {
                 Console.WriteLine(item);
             }

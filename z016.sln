@@ -12,7 +12,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z016.YahooFinanceApi", "Z016.YahooFinanceApi\Z016.YahooFinanceApi.csproj", "{C1AF347D-3420-4834-9B76-C6E24B466FCF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{C285115B-6B86-43D0-AE48-1FAF8FA76977}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{C285115B-6B86-43D0-AE48-1FAF8FA76977}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{9AB6B0F5-7F40-4C69-8E25-233B82570DED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z016.YahooFinanceApi.Test", "Test\Z016.YahooFinanceApi.Test\Z016.YahooFinanceApi.Test.csproj", "{3402C2DA-2F18-425F-80C4-159DC40F2016}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,9 +32,16 @@ Global
 		{C285115B-6B86-43D0-AE48-1FAF8FA76977}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C285115B-6B86-43D0-AE48-1FAF8FA76977}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C285115B-6B86-43D0-AE48-1FAF8FA76977}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3402C2DA-2F18-425F-80C4-159DC40F2016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3402C2DA-2F18-425F-80C4-159DC40F2016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3402C2DA-2F18-425F-80C4-159DC40F2016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3402C2DA-2F18-425F-80C4-159DC40F2016}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3402C2DA-2F18-425F-80C4-159DC40F2016} = {9AB6B0F5-7F40-4C69-8E25-233B82570DED}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F7662D2B-6328-47A7-99AB-8E93C926A449}
