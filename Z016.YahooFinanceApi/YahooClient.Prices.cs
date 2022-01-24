@@ -5,6 +5,7 @@
 namespace Z016.YahooFinanceApi;
 
 using System.Net;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -28,6 +29,79 @@ public partial class YahooClient
         YahooInterval interval = YahooInterval.Daily,
         CancellationToken cancellationToken = default)
     {
+        List<YahooPrice> prices = new();
+
+        var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return new YahooPricesResult(false, response.StatusCode, prices);
+        }
+
+        var result = this.GetPricesEnumerableAsync(response, cancellationToken);
+
+        if (result != null)
+        {
+            await foreach (var item in result)
+            {
+                prices.Add(item);
+            }
+        }
+
+        return new YahooPricesResult(true, response.StatusCode, prices);
+    }
+
+    private async IAsyncEnumerable<YahooPrice> GetPricesEnumerableAsync(HttpResponseMessage response, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var reader = new StreamReader(responseStream);
+
+        // Skip header.
+        var line = await reader.ReadLineAsync();
+        if (line != null)
+        {
+            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            {
+                line = await reader.ReadLineAsync();
+                if (line != null)
+                {
+                    var column = line.Split(',');
+                    if (column.Length == 7)
+                    {
+                        var date = column[0].GetDateOnly();
+                        if (date != null)
+                        {
+                            yield return new YahooPrice(
+                                Date: date.Value,
+                                Open: column[1].GetDouble(),
+                                High: column[2].GetDouble(),
+                                Low: column[3].GetDouble(),
+                                Close: column[4].GetDouble(),
+                                AdjClose: column[5].GetDouble(),
+                                Volume: column[6].GetLong());
+                        }
+                        else
+                        {
+                            this.logger?.LogDebug("Yahoo has an invalid date.\n {data}", line);
+                        }
+                    }
+                    else
+                    {
+                        this.logger?.LogDebug("Yahoo did not return 7 columns.\n {data}", line);
+                    }
+                }
+            } // While loop
+        }
+    }
+
+    private async Task<HttpResponseMessage> GetPricesResponseAsync(
+        string symbol,
+        DateOnly? firstDate = null,
+        DateOnly? lastDate = null,
+        YahooInterval interval = YahooInterval.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        this.logger?.LogDebug("GetPrices for {symbol}, firstDate = {firstDate}, lastDate = {lastDate}, interval = {interval}", symbol, firstDate, lastDate, interval);
+
         if (string.IsNullOrWhiteSpace(symbol))
         {
             throw new ArgumentNullException(nameof(symbol));
@@ -45,9 +119,8 @@ public partial class YahooClient
         string period2 = lastDate.HasValue ? lastDate.Value.ToUnixTimestamp() : DateTime.Today.ToUnixTimestamp();
         string intervalString = ToIntervalString(interval);
         var url = $"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={this.crumb}";
-        List<YahooPrice> prices = new();
+        this.logger?.LogTrace("{URL}", url);
 
-        this.logger?.LogInformation("{symbol}\n {url}", symbol, url);
         await this.CheckCrumb(cancellationToken);
         var response = await this.apiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
@@ -56,46 +129,7 @@ public partial class YahooClient
             throw new Exception("HttpClient.GetAsync return null.");
         }
 
-        if (!response.IsSuccessStatusCode)
-        {
-            return new YahooPricesResult(false, response.StatusCode, prices);
-        }
-
-        using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        using var reader = new StreamReader(responseStream);
-
-        // Skip header.
-        var line = await reader.ReadLineAsync();
-        if (line == null)
-        {
-            return new YahooPricesResult(true, response.StatusCode, prices);
-        }
-
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
-        {
-            line = await reader.ReadLineAsync();
-            if (line != null)
-            {
-                var column = line.Split(',');
-                if (column.Length == 7)
-                {
-                    var date = column[0].GetDateOnly();
-                    if (date != null)
-                    {
-                        prices.Add(new YahooPrice(
-                            Date: date.Value,
-                            Open: column[1].GetDouble(),
-                            High: column[2].GetDouble(),
-                            Low: column[3].GetDouble(),
-                            Close: column[4].GetDouble(),
-                            AdjClose: column[5].GetDouble(),
-                            Volume: column[6].GetLong()));
-                    }
-                }
-            }
-        } // While loop
-
-        return new YahooPricesResult(true, response.StatusCode, prices);
+        return response;
     }
 
     /// <summary>

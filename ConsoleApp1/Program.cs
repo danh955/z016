@@ -10,6 +10,7 @@ internal class Program
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder
+                .AddFilter("Z016", LogLevel.Trace)
                 .AddFilter("Microsoft", LogLevel.Warning)
                 .AddFilter("System", LogLevel.Warning)
                 .AddConsole();

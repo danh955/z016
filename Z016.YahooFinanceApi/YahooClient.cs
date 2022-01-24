@@ -63,7 +63,7 @@ public partial class YahooClient
             tryCount++;
         }
 
-        this.logger?.LogDebug("Got cookie. tryCount = {TryCount}, Crumb = {Crumb}, Cookie = {Cookie}", tryCount, this.crumb, cookie);
+        this.logger?.LogTrace("Got cookie. tryCount = {TryCount}, Crumb = {Crumb}, Cookie = {Cookie}", tryCount, this.crumb, cookie);
         this.apiHttpClient.DefaultRequestHeaders.Add(HttpRequestHeader.Cookie.ToString(), cookie);
         this.crumb = newCrumb ?? string.Empty;
     }
