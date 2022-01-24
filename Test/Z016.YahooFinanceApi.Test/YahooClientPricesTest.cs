@@ -12,8 +12,8 @@ namespace Z016.YahooFinanceApi.Test
     /// </summary>
     public class YahooClientPricesTest
     {
-        private readonly ITestOutputHelper loggerHelper;
         private readonly YahooClient client;
+        private readonly ITestOutputHelper loggerHelper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="YahooClientPricesTest"/> class.
@@ -25,6 +25,28 @@ namespace Z016.YahooFinanceApi.Test
 
             var logger = this.loggerHelper.BuildLoggerFor<YahooClient>();
             this.client = new YahooClient(logger);
+        }
+
+        /// <summary>
+        /// Get prices in a IAsyncEnumerable list test.
+        /// </summary>
+        /// <returns>Task.</returns>
+        [Fact]
+        public async Task GetPricesEnumerableAsyncTest()
+        {
+            DateOnly startDate = new(2022, 1, 3);
+            var response = await this.client.GetPricesEnumerableAsync("qqq", startDate, startDate.AddDays(5));
+
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccessful);
+
+            List<DateOnly> dates = new();
+            await foreach (var item in response.Prices)
+            {
+                dates.Add(item.Date);
+            }
+
+            Assert.Equal(5, dates.Count);
         }
 
         /// <summary>

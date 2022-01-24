@@ -44,30 +44,6 @@ public partial class YahooClient
     /// </summary>
     public int CrumbResetInterval { get; set; } = 5;
 
-    /// <summary>
-    /// Get the cookie and crumb value.
-    /// </summary>
-    /// <param name="cancellationToken">CancellationToken.</param>
-    /// <returns>True if successful.</returns>
-    protected async Task RefreshCookieAndCrumbAsync(CancellationToken cancellationToken)
-    {
-        const int maxTryCount = 5;
-        int tryCount = 0;
-
-        var (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync();
-
-        while (newCrumb == null && !cancellationToken.IsCancellationRequested && tryCount < maxTryCount)
-        {
-            await Task.Delay(1000, cancellationToken);
-            (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync();
-            tryCount++;
-        }
-
-        this.logger?.LogTrace("Got cookie. tryCount = {TryCount}, Crumb = {Crumb}, Cookie = {Cookie}", tryCount, this.crumb, cookie);
-        this.apiHttpClient.DefaultRequestHeaders.Add(HttpRequestHeader.Cookie.ToString(), cookie);
-        this.crumb = newCrumb ?? string.Empty;
-    }
-
     private static string? GetCookie(HttpResponseMessage responseMessage, string cookieName)
     {
         var keyValue = responseMessage.Headers.FirstOrDefault(h => h.Key == cookieName);
@@ -101,6 +77,30 @@ public partial class YahooClient
             this.nextCrumbTime = DateTime.Now.AddMinutes(this.CrumbResetInterval);
             await this.RefreshCookieAndCrumbAsync(cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Get the cookie and crumb value.
+    /// </summary>
+    /// <param name="cancellationToken">CancellationToken.</param>
+    /// <returns>True if successful.</returns>
+    private async Task RefreshCookieAndCrumbAsync(CancellationToken cancellationToken)
+    {
+        const int maxTryCount = 5;
+        int tryCount = 0;
+
+        var (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync();
+
+        while (newCrumb == null && !cancellationToken.IsCancellationRequested && tryCount < maxTryCount)
+        {
+            await Task.Delay(1000, cancellationToken);
+            (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync();
+            tryCount++;
+        }
+
+        this.logger?.LogTrace("Got cookie. tryCount = {TryCount}, Crumb = {Crumb}, Cookie = {Cookie}", tryCount, this.crumb, cookie);
+        this.apiHttpClient.DefaultRequestHeaders.Add(HttpRequestHeader.Cookie.ToString(), cookie);
+        this.crumb = newCrumb ?? string.Empty;
     }
 
     /// <summary>

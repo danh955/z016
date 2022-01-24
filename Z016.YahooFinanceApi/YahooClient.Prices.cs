@@ -4,6 +4,7 @@
 
 namespace Z016.YahooFinanceApi;
 
+using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
@@ -21,8 +22,8 @@ public partial class YahooClient
     /// <param name="lastDate">Last date.</param>
     /// <param name="interval">Stock price interval.</param>
     /// <param name="cancellationToken">CancellationToken.</param>
-    /// <returns>Task.</returns>
-    public async Task<YahooPricesResult> GetPricesAsync(
+    /// <returns>IEnumerable list of YahooPrice.</returns>
+    public async Task<YahooPricesResult<IEnumerable<YahooPrice>>> GetPricesAsync(
         string symbol,
         DateOnly? firstDate = null,
         DateOnly? lastDate = null,
@@ -34,7 +35,7 @@ public partial class YahooClient
         var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            return new YahooPricesResult(false, response.StatusCode, prices);
+            return new YahooPricesResult<IEnumerable<YahooPrice>>(false, response.StatusCode, prices);
         }
 
         var result = this.GetPricesEnumerableAsync(response, cancellationToken);
@@ -47,7 +48,33 @@ public partial class YahooClient
             }
         }
 
-        return new YahooPricesResult(true, response.StatusCode, prices);
+        return new YahooPricesResult<IEnumerable<YahooPrice>>(true, response.StatusCode, prices);
+    }
+
+    /// <summary>
+    /// Get historical stock prices.
+    /// </summary>
+    /// <param name="symbol">Symbol of prices to get.</param>
+    /// <param name="firstDate">First date.</param>
+    /// <param name="lastDate">Last date.</param>
+    /// <param name="interval">Stock price interval.</param>
+    /// <param name="cancellationToken">CancellationToken.</param>
+    /// <returns>IAsyncEnumerable of YahooPrice.</returns>
+    public async Task<YahooPricesResult<IAsyncEnumerable<YahooPrice>>> GetPricesEnumerableAsync(
+        string symbol,
+        DateOnly? firstDate = null,
+        DateOnly? lastDate = null,
+        YahooInterval interval = YahooInterval.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return new YahooPricesResult<IAsyncEnumerable<YahooPrice>>(false, response.StatusCode, AsyncEnumerable.Empty<YahooPrice>());
+        }
+
+        var result = this.GetPricesEnumerableAsync(response, cancellationToken);
+        return new YahooPricesResult<IAsyncEnumerable<YahooPrice>>(true, response.StatusCode, result);
     }
 
     private async IAsyncEnumerable<YahooPrice> GetPricesEnumerableAsync(HttpResponseMessage response, [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -135,10 +162,11 @@ public partial class YahooClient
     /// <summary>
     /// Yahoo prices result.
     /// </summary>
+    /// <typeparam name="T">Price list type.</typeparam>
     /// <param name="IsSuccessful">Gets a value indicating whether successful.</param>
     /// <param name="StatusCode">Gets the value of status codes from the HTTP request.</param>
     /// <param name="Prices">List of prices.</param>
-    public record YahooPricesResult(bool IsSuccessful, HttpStatusCode StatusCode, IEnumerable<YahooPrice> Prices);
+    public record YahooPricesResult<T>(bool IsSuccessful, HttpStatusCode StatusCode, T Prices);
 
     /// <summary>
     /// A stock price record from the client.
