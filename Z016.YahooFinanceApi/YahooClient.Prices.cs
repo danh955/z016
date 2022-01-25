@@ -100,8 +100,7 @@ public partial class YahooClient
                 line = await reader.ReadLineAsync();
                 if (line != null)
                 {
-                    parser.Line = line;
-                    if (parser.IsSuccess)
+                    if (parser.SplitLine(line))
                     {
                         yield return parser;
                     }

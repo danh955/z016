@@ -59,44 +59,38 @@ public class YahooPriceParser
     /// </summary>
     public long? Volume => this.column[6].GetLong();
 
-    /// <summary>
-    /// Gets a value indicating whether parsing was suspenseful.
-    /// </summary>
-    internal bool IsSuccess { get; private set; }
-
-    /// <summary>
-    /// Sets text line to parse.
-    /// </summary>
-    internal string Line
-    {
-        set
-        {
-            this.column = value.Split(',');
-            if (this.column.Length == 7)
-            {
-                var date = this.column[0].GetDateOnly();
-                if (date != null)
-                {
-                    this.Date = date.Value;
-                    this.IsSuccess = true;
-                }
-                else
-                {
-                    this.logger?.LogDebug("Yahoo has an invalid date.\n {data}", value);
-                    this.IsSuccess = false;
-                }
-            }
-            else
-            {
-                this.logger?.LogDebug("Yahoo did not return 7 columns.\n {data}", value);
-                this.IsSuccess = false;
-            }
-        }
-    }
-
     /// <inheritdoc/>
     public override string ToString()
     {
         return $"{nameof(YahooPriceParser)} {{ Date = {this.Date}, Open = {this.Open}, High = {this.High}, Low = {this.Low}, Close = {this.Close}, AdjClose = {this.AdjClose}, Volume = {this.Volume} }}";
+    }
+
+    /// <summary>
+    /// Split the line of text into columns.
+    /// </summary>
+    /// <param name="line">String to parse.</param>
+    /// <returns>True if successful.</returns>
+    internal bool SplitLine(string line)
+    {
+        this.column = line.Split(',');
+        if (this.column.Length == 7)
+        {
+            var date = this.column[0].GetDateOnly();
+            if (date != null)
+            {
+                this.Date = date.Value;
+                return true;
+            }
+            else
+            {
+                this.logger?.LogDebug("Yahoo has an invalid date.\n {data}", line);
+                return false;
+            }
+        }
+        else
+        {
+            this.logger?.LogDebug("Yahoo did not return 7 columns.\n {data}", line);
+            return false;
+        }
     }
 }
