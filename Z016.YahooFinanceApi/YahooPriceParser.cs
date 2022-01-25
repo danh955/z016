@@ -93,4 +93,10 @@ public class YahooPriceParser
             }
         }
     }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return $"{nameof(YahooPriceParser)} {{ Date = {this.Date}, Open = {this.Open}, High = {this.High}, Low = {this.Low}, Close = {this.Close}, AdjClose = {this.AdjClose}, Volume = {this.Volume} }}";
+    }
 }

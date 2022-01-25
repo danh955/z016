@@ -31,6 +31,17 @@ internal class Program
             }
         }
 
+        var parser = await client.GetPricesParserAsync("msft", new(2022, 1, 3), new(2022, 1, 8));
+        logger.LogInformation("IsSuccessful = {IsSuccessful}  StatusCode = {StatusCode}", response.IsSuccessful, response.StatusCode);
+
+        if (parser.IsSuccessful)
+        {
+            await foreach (var item in parser.Prices)
+            {
+                Console.WriteLine(item);
+            }
+        }
+
         logger.LogInformation("End");
         Console.WriteLine("Done");
     }
