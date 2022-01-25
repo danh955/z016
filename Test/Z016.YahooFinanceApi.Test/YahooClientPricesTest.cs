@@ -28,14 +28,14 @@ namespace Z016.YahooFinanceApi.Test
         }
 
         /// <summary>
-        /// Get prices in a IAsyncEnumerable list test.
+        /// Get prices parser in a IAsyncEnumerable list test.
         /// </summary>
         /// <returns>Task.</returns>
         [Fact]
-        public async Task GetPricesEnumerableAsyncTest()
+        public async Task GetPricesParserAsyncTest()
         {
             DateOnly startDate = new(2022, 1, 3);
-            var response = await this.client.GetPricesEnumerableAsync("qqq", startDate, startDate.AddDays(5));
+            var response = await this.client.GetPricesParserAsync("qqq", startDate, startDate.AddDays(5));
 
             Assert.NotNull(response);
             Assert.True(response.IsSuccessful);

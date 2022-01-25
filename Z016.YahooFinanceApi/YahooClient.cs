@@ -15,7 +15,7 @@ public partial class YahooClient
 {
     private readonly HttpClient apiHttpClient = new();
     private readonly HttpClient crumbHttpClient = new();
-    private readonly ILogger<YahooClient>? logger;
+    private readonly ILogger? logger;
 
     private readonly Regex regexCrumb = new(
                                 "\"CrumbStore\":{\"crumb\":\"(?<crumb>.+?)\"}",
@@ -28,7 +28,7 @@ public partial class YahooClient
     /// Initializes a new instance of the <see cref="YahooClient"/> class.
     /// </summary>
     /// <param name="logger">ILogger.</param>
-    public YahooClient(ILogger<YahooClient>? logger = null)
+    public YahooClient(ILogger? logger = null)
     {
         this.logger = logger;
 
