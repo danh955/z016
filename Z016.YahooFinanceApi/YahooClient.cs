@@ -75,7 +75,7 @@ public partial class YahooClient
         if (this.nextCrumbTime < DateTime.Now || this.crumb == null)
         {
             this.nextCrumbTime = DateTime.Now.AddMinutes(this.CrumbResetInterval);
-            await this.RefreshCookieAndCrumbAsync(cancellationToken);
+            await this.RefreshCookieAndCrumbAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -89,12 +89,12 @@ public partial class YahooClient
         const int maxTryCount = 5;
         int tryCount = 0;
 
-        var (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync();
+        var (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync().ConfigureAwait(false);
 
         while (newCrumb == null && !cancellationToken.IsCancellationRequested && tryCount < maxTryCount)
         {
-            await Task.Delay(1000, cancellationToken);
-            (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync();
+            await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
+            (cookie, newCrumb) = await this.TryGetCookieAndCrumbAsync().ConfigureAwait(false);
             tryCount++;
         }
 
@@ -111,7 +111,7 @@ public partial class YahooClient
     {
         const string uri = "https://finance.yahoo.com/quote/%5EGSPC";
 
-        var response = await this.crumbHttpClient.GetAsync(uri);
+        var response = await this.crumbHttpClient.GetAsync(uri).ConfigureAwait(false);
         if (response.IsSuccessStatusCode)
         {
             var cookie = GetCookie(response, "Set-Cookie");
@@ -121,7 +121,7 @@ public partial class YahooClient
                 return (null, null);
             }
 
-            var html = await response.Content.ReadAsStringAsync();
+            var html = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             var matches = this.regexCrumb.Matches(html);
             if (matches.Count != 1)
             {

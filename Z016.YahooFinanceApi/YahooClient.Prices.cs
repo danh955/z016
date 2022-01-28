@@ -30,19 +30,18 @@ public partial class YahooClient
         YahooInterval interval = YahooInterval.Daily,
         CancellationToken cancellationToken = default)
     {
-        List<YahooPrice> prices = new();
-
-        var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken);
+        var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            return new YahooPricesResult(false, response.StatusCode, prices);
+            return new YahooPricesResult(false, response.StatusCode, Enumerable.Empty<YahooPrice>());
         }
 
         var result = this.GetPricesParserAsync(response, cancellationToken);
 
+        List<YahooPrice> prices = new();
         if (result != null)
         {
-            await foreach (var item in result)
+            await foreach (var item in result.ConfigureAwait(false))
             {
                 prices.Add(
                     new YahooPrice(
@@ -75,7 +74,7 @@ public partial class YahooClient
         YahooInterval interval = YahooInterval.Daily,
         CancellationToken cancellationToken = default)
     {
-        var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken);
+        var response = await this.GetPricesResponseAsync(symbol, firstDate, lastDate, interval, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             return new YahooPricesParserResult(false, response.StatusCode, AsyncEnumerable.Empty<YahooPriceParser>());
@@ -91,19 +90,16 @@ public partial class YahooClient
         using var reader = new StreamReader(responseStream);
 
         // Skip header.
-        var line = await reader.ReadLineAsync();
+        var line = await reader.ReadLineAsync().ConfigureAwait(false);
         if (line != null)
         {
             var parser = new YahooPriceParser(this.logger);
-            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested
+                && (line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
             {
-                line = await reader.ReadLineAsync();
-                if (line != null)
+                if (parser.SplitLine(line))
                 {
-                    if (parser.SplitLine(line))
-                    {
-                        yield return parser;
-                    }
+                    yield return parser;
                 }
             } // While loop
         }
@@ -127,22 +123,27 @@ public partial class YahooClient
         {
             if (firstDate > lastDate)
             {
-                throw new ArgumentException($"{nameof(firstDate)} is grater then {nameof(lastDate)}");
+                var message = $"{nameof(firstDate)} ({firstDate}) is grater then {nameof(lastDate)} ({lastDate})";
+                this.logger?.LogError(message);
+                throw new ArgumentException(message);
             }
         }
 
         string period1 = firstDate.HasValue ? firstDate.Value.ToUnixTimestamp() : Constant.EpochString;
         string period2 = lastDate.HasValue ? lastDate.Value.ToUnixTimestamp() : DateTime.Today.ToUnixTimestamp();
         string intervalString = ToIntervalString(interval);
+
+        await this.CheckCrumb(cancellationToken).ConfigureAwait(false);
         var url = $"https://query1.finance.yahoo.com/v7/finance/download/{symbol}?period1={period1}&period2={period2}&interval={intervalString}&events=history&includeAdjustedClose=true&crumb={this.crumb}";
         this.logger?.LogTrace("{URL}", url);
 
-        await this.CheckCrumb(cancellationToken);
         var response = await this.apiHttpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
         if (response == null)
         {
-            throw new Exception("HttpClient.GetAsync return null.");
+            var message = $"{nameof(this.apiHttpClient.GetAsync)} return null.";
+            this.logger?.LogError(message);
+            throw new Exception(message);
         }
 
         return response;
