@@ -36,13 +36,18 @@ internal class Program
 
         if (parser.IsSuccessful)
         {
-            await foreach (var item in parser.Prices)
-            {
-                Console.WriteLine(item);
-            }
+            var prices = await parser.Prices
+                    .Select(p => new MyPrice(p.Date, p.AdjClose, p.Volume))
+                    .ToDictionaryAsync(p => p.Date)
+                    .ConfigureAwait(false);
+
+            Console.WriteLine(prices[new(2022, 1, 4)]);
+            Console.WriteLine(prices[new(2022, 1, 6)]);
         }
 
         logger.LogInformation("End");
         Console.WriteLine("Done");
     }
+
+    public record MyPrice(DateOnly Date, double? AdjClose, long? Volume);
 }

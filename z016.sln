@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "ConsoleApp1\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{9AB6B0F5-7F40-4C69-8E25-233B82570DED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z016.YahooFinanceApi.Test", "Test\Z016.YahooFinanceApi.Test\Z016.YahooFinanceApi.Test.csproj", "{3402C2DA-2F18-425F-80C4-159DC40F2016}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Z016.YahooFinanceApi.Test", "Test\Z016.YahooFinanceApi.Test\Z016.YahooFinanceApi.Test.csproj", "{3402C2DA-2F18-425F-80C4-159DC40F2016}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
